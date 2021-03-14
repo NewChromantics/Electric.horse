@@ -18,8 +18,13 @@
 		
 		#glcanvas
 		{
-			width:	100vw;
-			height:	100vh;
+			/*	 keep square aspect ratio */
+			width:	100vmax;
+			height:	100vmax;
+			/* stick to bottom */
+			position:	absolute;
+			bottom:	0px;
+			left:	0px;
 		}
 	</style>
 </head>
