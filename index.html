@@ -8,12 +8,12 @@
 		
 		body
 		{
-		background-color:	#333;
-		color:				#fff;
-		font-family:		"futura-pt",sans-serif;
-		margin:				0px;
-		padding:			0px;
-		overflow:			hidden;
+			background-color:	#333;
+			color:				#fff;
+			font-family:		"futura-pt",sans-serif;
+			margin:				0px;
+			padding:			0px;
+			overflow:			hidden;
 		}
 		
 		#glcanvas
@@ -80,29 +80,57 @@ vec4 GetColour(int Index)
 		return vec4(0,1,0,1);
 }
 
+const float InternalBorder = 0.00;
+const float AAOutBorder = 0.004;	//	1/255
+const float AAInBorder = 0.00;
+const bool AnimateOutwards = true;
+
+vec3 GetStripedColour(float Distance)
+{
+	Distance = AnimateOutwards ? (1.0-Distance) : Distance;
+	int StripeCount = 11;
+	float SpeedSclar = 3.0;
+	Distance += Time / SpeedSclar;
+	Distance *= float(StripeCount);
+	float Stripef = mod( Distance, float(ColourCount-1) );
+	int Stripe = int(Stripef);
+	return GetColour( Stripe ).xyz;
+}
+
+float Range(float Min,float Max,float Value)
+{
+	return (Value-Min) / (Max-Min);
+}
+
+float Range01(float Min,float Max,float Value)
+{
+	return clamp(Range(Min,Max,Value),0.0,1.0);
+}
+
+
+float SmoothStep01(float Min,float Max,float Value)
+{
+	return clamp(smoothstep(Min,Max,Value),0.0,1.0);
+}
+
 void main()
 {
+	//	1 = horse, 0 = nothing
+	//	turn into inside/outside (-1...0...1)
 	float Distance = texture2D( SdfTexture, uv ).a;
+	Distance = 1.0 - Distance;
+	Distance -= InternalBorder;
+	
 	vec3 Colour = texture2D( HorseTexture, uv ).xyz;
 	gl_FragColor = vec4(Colour,1);
 	
-	float BorderDistance = 1.0;
-	float EdgeDistance = 0.999;
-	if ( Distance >= EdgeDistance )
-	{
-		float Blur = (Distance-EdgeDistance) / (BorderDistance-EdgeDistance);
-		gl_FragColor.xyz = mix( gl_FragColor.xyz, vec3(0,0,0), 1.0-Blur );
-	}
-	else
-	{
-		int StripeCount = 11;
-		float SpeedSclar = 3.0;
-		Distance += Time / SpeedSclar;
-		Distance *= float(StripeCount);
-		float Stripef = mod( Distance, float(ColourCount-1) );
-		int Stripe = int(Stripef);
-		gl_FragColor.xyz = GetColour( Stripe ).xyz;
-	}
+	vec3 StripedColour = GetStripedColour(Distance);
+	
+	float AntiAlias = SmoothStep01( -AAInBorder, AAOutBorder, Distance );
+	
+	//float Blur = (Distance-EdgeDistance) / (BorderDistance-EdgeDistance);
+	//gl_FragColor.xyz = mix( gl_FragColor.xyz, vec3(0,0,0), 1.0-Blur );
+	gl_FragColor.xyz = mix( gl_FragColor.xyz, StripedColour, AntiAlias );
 }
 `;
 
