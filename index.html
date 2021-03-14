@@ -8,8 +8,8 @@
 		
 		body
 		{
-		xxxbackground-color:	#0ff;
-		color:				#000;
+		background-color:	#333;
+		color:				#fff;
 		font-family:		"futura-pt",sans-serif;
 		margin:				0px;
 		padding:			0px;
@@ -18,11 +18,9 @@
 	</style>
 </head>
 <body>
-	<script src="PopWebgl/PopGl.js"></script>
-	<script src="PopWebgl/PopBlitter.js"></script>
-	<canvas id="glcanvas" width="100" height="100">
-		Your browser doesn't appear to support the HTML5 <code>&lt;canvas&gt;</code> element.
-	</canvas>
+<canvas id="glcanvas" width="100" height="100">
+	Your browser doesn't appear to support the HTML5 <code>&lt;canvas&gt;</code> element.
+</canvas>
 <script>
 
 
@@ -113,64 +111,45 @@ void main()
 }
 `;
 
-	window.onload = main;
 
-	function main()
+async function ILoveHorses()
+{
+	const PopModule = await import('./PopEngineCommon/PopEngine.js');
+	const Pop = PopModule.default;
+
+	//const Canvas = new Pop.Opengl.Window('glcanvas');
+
+	var Time = 0;
+		
+	//let HorseSdfShader = new TShader("Sdf", VertexShader, FragShader_SdfHorse );
+		
+	const SdfUrl = 'http://electric.horse/horse_sdf.png';
+	const HorseUrl = 'http://electric.horse/horse.jpg';
+	
+	const SdfTexture = await Pop.FileSystem.LoadFileAsImageAsync(SdfUrl);
+	const HorseTexture = await Pop.FileSystem.LoadFileAsImageAsync(HorseUrl);
+		
+	const Colours =
+	[
+	Pop.Colour.HexToRgbaf('ADFF5FFF'),
+	Pop.Colour.HexToRgbaf('FFF15FFF'),
+	Pop.Colour.HexToRgbaf('FFB25FFF'),
+	Pop.Colour.HexToRgbaf('FF5F83FF'),
+	Pop.Colour.HexToRgbaf('FF5FFFFF'),
+	Pop.Colour.HexToRgbaf('C15FFFFF'),
+	Pop.Colour.HexToRgbaf('865FFFFF'),
+	Pop.Colour.HexToRgbaf('5F8EFFFF'),
+	Pop.Colour.HexToRgbaf('5FD1FFFF'),
+	Pop.Colour.HexToRgbaf('5FFFD1FF')
+	];
+		/*
+	
+	let HorseBlitter = new TBlitter("HorseBlitter", FragShader_SdfHorse );
+
+	function Render(RenderContext)
 	{
-		var Canvas = document.getElementById('glcanvas');
-		var Context = new TContext( Canvas );
-		var Screen = new TScreen( Canvas );
-
-//	force 1:1 ratio
-		Screen.GetWidth = function()
-		{
-			return Math.max( this.CanvasElement.width, this.CanvasElement.height );
-		}
-		Screen.GetHeight = function()
-		{
-			return Math.max( this.CanvasElement.width, this.CanvasElement.height );
-		}
-
-		var ResizeCanvas = function()
-		{
-			console.log("ResizeCanvas");
-			Canvas.width = window.innerWidth;
-			//	gr: where did this border come from?
-			Canvas.height = window.innerHeight+4;
-		}
-
-		// resize the canvas to fill browser window dynamically
-		window.addEventListener('resize', ResizeCanvas, false);
-		ResizeCanvas();
-
-		var Time = 0;
-		
-		
-		let HorseSdfShader = new TShader("Sdf", VertexShader, FragShader_SdfHorse );
-		
-		let SdfUrl = 'http://electric.horse/horse_sdf.png';
-		let HorseUrl = 'http://electric.horse/horse.jpg';
-		let SdfTexture = new TTexture("sdf",SdfUrl);
-		let HorseTexture = new TTexture("Horse",HorseUrl);
-		
-		let ClearColour = new float4(0,0,0,1);
-
-		var Colours =
-		[
-		HexToColour4('ADFF5FFF'),
-		HexToColour4('FFF15FFF'),
-		HexToColour4('FFB25FFF'),
-		HexToColour4('FF5F83FF'),
-		HexToColour4('FF5FFFFF'),
-		HexToColour4('C15FFFFF'),
-		HexToColour4('865FFFFF'),
-		HexToColour4('5F8EFFFF'),
-		HexToColour4('5FD1FFFF'),
-		HexToColour4('5FFFD1FF')
-		];
-		 
-		let HorseBlitter = new TBlitter("HorseBlitter", FragShader_SdfHorse );
-
+		RenderContext.Clear([Time,0,1,1]);
+		/*
 		let SetHorseUniforms = function(Shader,Geo)
 		{
 			Shader.SetUniform( 'HorseTexture', HorseTexture );
@@ -185,31 +164,29 @@ void main()
 				Shader.SetUniform( ColourUniform, Colours[i] );
 			}
 		};
-		
-
-		function Render()
+				
+		try
 		{
-			Time += 1.0 / 60.0;
-			
-			try
-			{
-				HorseBlitter.Render( Screen, SetHorseUniforms );
-			}
-			catch(Exception)
-			{
-				//	rethrow
-				throw Exception;
-			}
-			finally
-			{
-				//	always request redraw
-				requestAnimationFrame( Render );
-			}
+			HorseBlitter.Render( Screen, SetHorseUniforms );
 		}
-
-		Render();
+		catch(Exception)
+		{
+			//	rethrow
+			throw Exception;
+		}
+		*//*
 	}
+	Canvas.OnRender = Render;
+		*/
+	while(true)
+	{
+		const Timestep = await Pop.WaitForNextFrame();
+		Time += Timestep;
+		//Pop.Debug(`Time=${Time}`);
+	}
+}
+ILoveHorses();
 
-
-</script></body>
+</script>
+</body>
 </html>
