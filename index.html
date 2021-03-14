@@ -30,7 +30,7 @@
 <script>
 
 
-var VertexShader = `
+var QuadVertexShader = `
 attribute vec2 a_position;
 varying vec2 uv;
 void main()
@@ -135,7 +135,7 @@ async function ILoveHorses()
 	Canvas.OnRender = RenderClear;
 	
 
-	var Time = 0;
+	let Time = 0;
 		
 	//let HorseSdfShader = new TShader("Sdf", VertexShader, FragShader_SdfHorse );
 		
@@ -144,7 +144,9 @@ async function ILoveHorses()
 	
 	const SdfTexture = await Pop.FileSystem.LoadFileAsImageAsync(SdfUrl);
 	const HorseTexture = await Pop.FileSystem.LoadFileAsImageAsync(HorseUrl);
-		
+	SdfTexture.SetLinearFilter(true);
+	HorseTexture.SetLinearFilter(true);
+	
 	const Colours =
 	[
 	Pop.Colour.HexToRgbaf('ADFF5FFF'),
@@ -161,19 +163,58 @@ async function ILoveHorses()
 		
 	
 	//let HorseBlitter = new TBlitter("HorseBlitter", FragShader_SdfHorse );
+	let HorseSdfShader;	
+	function AllocShader(RenderContext)
+	{
+		if ( HorseSdfShader )
+			return HorseSdfShader;
+
+		HorseSdfShader = new Pop.Opengl.Shader(RenderContext,'Horse sdf',QuadVertexShader,FragShader_SdfHorse);
+		return HorseSdfShader;
+	}
+	
+	let QuadGeo;
+	function AllocQuadGeo(RenderContext)
+	{
+		if ( QuadGeo )
+			return QuadGeo;
+		
+		const PositionAttrib = {};		
+		PositionAttrib.Data = new Float32Array(
+		[
+			0,0,
+			1,0,
+			0,1,
+			
+			1,0,
+			1,1,
+			0,1
+		]);
+		PositionAttrib.Size = 2;
+		
+		const Attribs = {};
+		Attribs.PositionNorm = PositionAttrib;
+
+		QuadGeo = new Pop.Opengl.TriangleBuffer(RenderContext,Attribs);
+		return QuadGeo;
+	}
 
 	function Render(RenderContext)
 	{
+		//	should get GetAsset()'s
+		const Shader = AllocShader(RenderContext);
+		const Geo = AllocQuadGeo(RenderContext);
+		
 		const ClearColour = [1,0,0,1];
 		ClearColour[2] = (Time / 10) % 1;
 		RenderContext.ClearColour(...ClearColour);
-		/*
-		let SetHorseUniforms = function(Shader,Geo)
+		
+		function SetUniforms(Shader)
 		{
 			Shader.SetUniform( 'HorseTexture', HorseTexture );
 			Shader.SetUniform( 'SdfTexture', SdfTexture );
-			Shader.SetUniformFloat('Time', Time);
-			Shader.SetUniformInt( 'ColourCount', Colours.length );
+			Shader.SetUniform('Time', Time);
+			Shader.SetUniform( 'ColourCount', Colours.length );
 			
 			//	gr; can't use less than with this xml html
 			for ( let i=0;	i<Colours.length;	i++ )
@@ -181,18 +222,8 @@ async function ILoveHorses()
 				let ColourUniform = "Colour" + i;
 				Shader.SetUniform( ColourUniform, Colours[i] );
 			}
-		};
-				
-		try
-		{
-			HorseBlitter.Render( Screen, SetHorseUniforms );
 		}
-		catch(Exception)
-		{
-			//	rethrow
-			throw Exception;
-		}
-		*/
+		RenderContext.DrawGeometry(Geo,Shader,SetUniforms);
 	}
 	Canvas.OnRender = Render;
 		
